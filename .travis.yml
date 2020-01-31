@@ -1,23 +1,27 @@
+
+sudo: required
 language: java
-sudo: false # faster builds
 
 jdk:
-  - openjdk11
-  - oraclejdk11
   - openjdk8
-  - oraclejdk8
-
-cache:
-  directories:
-    - $HOME/.m2
-
-install: true
 
 script:
-  - travis_wait 30 ./mvnw clean install -DskipTests=false -Dcheckstyle.skip=false -Drat.skip=false -Dmaven.javadoc.skip=true
+  - mvn clean compile assembly:single
 
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
-
-after_failure:
-  - if [ -f dubbo.log ]; then echo "------TAIL of dubbo.log------"; tail -n 1000 dubbo.log; echo "------END of dubbo.log------"; fi
+before_deploy:
+    - mkdir MiningBuild
+    - find . -name '*.jar' -exec cp {} ./MiningBuild \;
+    - cd /home/travis/build/build-test-conflicts/dubbo/MiningBuild
+    - tar -zcvf result.tar.gz *
+deploy:
+  provider: releases
+  api_key:
+    secure: $GITHUB_TOKEN
+  file: result.tar.gz
+  name: fetchjar-bce2f44ae
+  file_glob: true
+  overwrite: true
+  skip_cleanup: true
+  on:
+    all_branches: true 
+            
